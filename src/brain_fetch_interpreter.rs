@@ -61,8 +61,6 @@ impl BrainFetchInterpreter {
             eprintln!("Invalid URL in memory cell {}", url_cell);
             return;
         }
-        println!("URL: {}", url);
-        println!("Headers: {:?}", headers);
         let client = reqwest::Client::new();
         let mut request = client.get(&url);
         let headermap = Self::vec_to_headermap(headers);
@@ -122,13 +120,20 @@ impl BrainFetchInterpreter {
         headers
     }
 
-    pub(crate) fn store_string_in_memory(&mut self, data: String) {
+    fn store_string_in_memory(&mut self, data: String) {
         for (i, byte) in data.bytes().enumerate() {
             self.memory.insert(self.current + i as i64, byte);
         }
         self.memory.insert(self.current + data.len() as i64, 0);
 
     }
+    
+    async fn read_input_from_stdin(&mut self) -> u8 {
+        let mut input = String::new();
+        tokio_io::stdin().read_line(&mut input).await.expect("Failed to read input");
+        input.trim().bytes().next().unwrap_or(0) // Returns first byte or 0 if no input
+    }
+
     pub async fn run(&mut self) -> String {
         let mut output = String::new();
         while self.instruction_current < self.program.len() {
@@ -145,7 +150,10 @@ impl BrainFetchInterpreter {
                 '+' => { *self.memory.entry(self.current).or_insert(0) = self.memory.get(&self.current).unwrap_or(&0).wrapping_add(1); }
                 '-' => { *self.memory.entry(self.current).or_insert(0) = self.memory.get(&self.current).unwrap_or(&0).wrapping_sub(1); }
                 '.' => { output.push(*self.memory.get(&self.current).unwrap_or(&0) as char);}
-                ',' => { let mut input = [0; 1]; io::stdin().read_exact(&mut input).expect("bad input"); self.memory.insert(self.current, input[0]); }
+                ',' => { 
+                    let byte = self.read_input_from_stdin().await; 
+                    self.memory.insert(self.current, byte); 
+                }
                 '@' => { self.fetch_from_api(self.current).await; }
                 '[' => { if *self.memory.get(&self.current).unwrap_or(&0) == 0 { self.instruction_current = self.bracket_pairs[&self.instruction_current]; } }
                 ']' => { if *self.memory.get(&self.current).unwrap_or(&0) != 0 { self.instruction_current = self.bracket_pairs[&self.instruction_current]; } }
