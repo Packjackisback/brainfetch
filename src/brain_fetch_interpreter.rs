@@ -11,6 +11,7 @@ pub struct BrainFetchInterpreter {
     bracket_pairs: HashMap<usize, usize>,
 }
 
+
 impl BrainFetchInterpreter {
     pub fn new(program: &str) -> Self {
         let program: Vec<char> = program.chars().collect();
@@ -121,7 +122,7 @@ impl BrainFetchInterpreter {
         headers
     }
 
-    fn store_string_in_memory(&mut self, data: String) {
+    pub(crate) fn store_string_in_memory(&mut self, data: String) {
         for (i, byte) in data.bytes().enumerate() {
             self.memory.insert(self.current + i as i64, byte);
         }

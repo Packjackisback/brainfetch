@@ -9,17 +9,15 @@ Alternatively, you can use this library by adding brainfetch_lib to your Cargo.t
 
 ## Usage
 
-```python
-import foobar
-
-# returns 'words'
-foobar.pluralize('word')
-
-# returns 'geese'
-foobar.pluralize('goose')
-
-# returns 'phenomenon'
-foobar.singularize('phenomena')
+```rust
+use brainfetch_lib::BrainFetchInterpreter;
+#[tokio::main]
+async fn main() {
+    let program = "+++++++[>+++++<-]>.";
+    let mut interpreter = BrainFetchInterpreter::new(program);
+    let s: String = interpreter.run().await;
+    println!("{}", s);
+}
 ```
 
 ## Contributing
