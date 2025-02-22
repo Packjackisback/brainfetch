@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 pub fn string_to_brainfuck(input: &str) -> String {
     let mut brainfuck_code = String::new();
 
