@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT"
 description = "A library for my Brainfuck deriviation with support for fetching from apis with a few other helper commands."
 repository = "https://github.com/packjackisback/brainfetch"
-readme = "https://github.com/packjackisback/brainfetch/README.md"
+readme = "README.md"
 [dependencies]
 reqwest = "0.12.12"
 
