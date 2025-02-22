@@ -1,9 +1,11 @@
 mod gen_code;
 
 use std::collections::HashMap;
-use std::io::{self, Read};
+use std::fs::File;
+use std::io::{self, Write, Read};
 use reqwest;
 use reqwest::header::{HeaderMap, HeaderName};
+use csv::Writer;
 use crate::gen_code::string_to_brainfuck;
 
 struct BrainfuckInterpreter {
@@ -86,7 +88,8 @@ impl BrainfuckInterpreter {
             eprintln!("Invalid URL in memory cell {}", url_cell);
             return;
         }
-
+        println!("URL: {}", url);
+        println!("Headers: {:?}", headers);
         let client = reqwest::Client::new();
         let mut request = client.get(&url);
         let headermap = Self::vec_to_headermap(headers);
@@ -153,6 +156,30 @@ impl BrainfuckInterpreter {
         self.memory.insert(self.current + data.len() as i64, 0);
 
     }
+    fn dump_memory_to_csv(&self, filename: &str) -> io::Result<()> {
+        let file = File::create(filename)?;
+        let mut writer = Writer::from_writer(file);
+        writer.write_record(&["Index", "Value (Decimal)", "Character"])?;
+        let mut indices: Vec<i64> = self.memory.keys().copied().collect();
+        indices.sort();
+        for index in indices {
+            let value = self.memory.get(&index).unwrap_or(&0);
+            let character = if *value >= 32 && *value <= 126 {
+                (*value as char).to_string()
+            } else {
+                "".to_string()
+            };
+            writer.write_record(&[
+                index.to_string(),
+                value.to_string(),
+                character,
+            ])?;
+        }
+
+        writer.flush()?;
+        Ok(())
+    }
+
 
     async fn run(&mut self) {
         while self.instruction_current < self.program.len() {
@@ -179,6 +206,13 @@ impl BrainfuckInterpreter {
                 '|' => {self.current -= *self.memory.get(&self.current).unwrap_or(&0) as i64}
                 '*' => {self.current += *self.memory.get(&self.current).unwrap_or(&0) as i64}
                 '#' => {self.current = 0}
+                '!' => {
+                    if let Err(e) = self.dump_memory_to_csv("memory_dump.csv") {
+                        eprintln!("Failed to dump memory to CSV: {}", e);
+                    } else {
+                        println!("Memory dumped to \"memory_dump.csv\"");
+                    }
+                }
                 _ => {}
             }
             self.instruction_current += 1;
@@ -200,7 +234,67 @@ async fn main() {
     #
     [.>]
     ~
-    "#, string_to_brainfuck("http://security.mercurywork.shop/api"), string_to_brainfuck("AUTHENTICATION"), string_to_brainfuck("bob"));
+
+    >>
+    ++++++++
+    [<++++++++++++++++>-]<
+    *
+    {}
+    >>>>>>{}
+    <_|_
+    +++++++++++++
+    [<+++++++++++++>-]<
+    %|<
+    _
+    %
+    .
+    <  now at 23
+    _
+    %
+    [-]
+    %
+    <
+    _
+    %
+    -
+    [>++++++++<-]>+++++++ now at 23 with what should be 255
+    * jumps to 278
+    >>>>>>>>>>>>>>>>>>>>>>>>>>>>> 307
+    +++++++++++++++
+    [<+++++++++++++++++>-]< 306 should now hold 255 as well so we can jump back with it
+    %
+    _
+    |
+    ~
+    _ 51 now need to go to 24 so 27
+    <<<< now at 47 which holds 32
+    | jump back to 15 need to go to 24
+    >>>>>>>>> now at 24 ready to copy
+    [<*>>>>>>>>>>>>>>>>>+>>>>>>>>>>>|<<<<|>>>>>>>>>-] should in theory move 8 to in the correct spot
+    > onto 25
+    [<<*>>>>>>>>>>>>>>>>>>+>>>>>>>>>>|<<<<|>>>>>>>>>>-] should move the number in 25
+    >
+    [<<<*>>>>>>>>>>>>>>>>>>>+>>>>>>>>>|<<<<|>>>>>>>>>>>-] should move the number in 26
+    > onto 27 yippee
+    [<<<<*>>>>>>>>>>>>>>>>>>>>+>>>>>>>>|<<<<|>>>>>>>>>>>>-] should move the number in 27
+    > onto 28 yippee 2 left guys
+    [<<<<<*>>>>>>>>>>>>>>>>>>>>>+>>>>>>>|<<<<|>>>>>>>>>>>>>-] should move the number in 28
+    > onto 29 last one
+    [<<<<<<*>>>>>>>>>>>>>>>>>>>>>>+>>>>>>|<<<<|>>>>>>>>>>>>>>-]
+    wait we are done just need to remove the far jump and then fetch and then repeat everything again
+    <<<<<<* to 278
+    >>>>>>>>>>>>>>>>>>>>>>>>>>>> _ should be at 306
+    [-] set to zero time to add headers yay
+    >>
+    {}
+    >
+    {}
+    <<<<<<<<<| back to 251
+    >>>>>>
+    ~
+    @
+    ~!
+    "#, string_to_brainfuck("http://security.mercurywork.shop/api"), string_to_brainfuck("AUTHENTICATION"), string_to_brainfuck("bob"), string_to_brainfuck("http://security.mercurywork.shop/api/"),string_to_brainfuck(".json"), string_to_brainfuck("AUTHENTICATION"), string_to_brainfuck("bob"));
     let mut interpreter = BrainfuckInterpreter::new(&*program_string);
     interpreter.run().await;
 }
