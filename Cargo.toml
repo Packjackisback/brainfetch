@@ -1,6 +1,6 @@
 [package]
 name = "brainfetch_lib"
-version = "0.1.1"
+version = "0.1.0"
 edition = "2021"
 license = "MIT"
 description = "A library for my Brainfuck deriviation with support for fetching from apis with a few other helper commands."
@@ -8,7 +8,7 @@ repository = "https://github.com/packjackisback/brainfetch"
 readme = "README.md"
 [dependencies]
 reqwest = "0.12.12"
-
+tokio = {version = "1.43.0", features = ["full"]}
 [lib]
 name = "brainfetch_lib"
 path = "src/lib.rs"

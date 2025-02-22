@@ -143,7 +143,7 @@ impl BrainFetchInterpreter {
                 '<' => { self.current -= 1; }
                 '+' => { *self.memory.entry(self.current).or_insert(0) = self.memory.get(&self.current).unwrap_or(&0).wrapping_add(1); }
                 '-' => { *self.memory.entry(self.current).or_insert(0) = self.memory.get(&self.current).unwrap_or(&0).wrapping_sub(1); }
-                '.' => { output.push(*self.memory.get(&self.current).unwrap_or(&0) as char); }
+                '.' => { output.push(*self.memory.get(&self.current).unwrap_or(&0) as char);}
                 ',' => { let mut input = [0; 1]; io::stdin().read_exact(&mut input).expect("bad input"); self.memory.insert(self.current, input[0]); }
                 '@' => { self.fetch_from_api(self.current).await; }
                 '[' => { if *self.memory.get(&self.current).unwrap_or(&0) == 0 { self.instruction_current = self.bracket_pairs[&self.instruction_current]; } }
