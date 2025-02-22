@@ -1,8 +1,7 @@
 use std::collections::HashMap;
-use std::io::{self, Read};
 use reqwest;
 use reqwest::header::{HeaderMap, HeaderName};
-
+use tokio::io::{self as tokio_io, AsyncBufReadExt};
 pub struct BrainFetchInterpreter {
     memory: HashMap<i64, u8>,
     current: i64,
