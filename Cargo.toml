@@ -1,0 +1,8 @@
+[package]
+name = "brainfuck"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+reqwest = "0.12.12"
+tokio = { version = "1.43.0", features = ["rt", "rt-multi-thread", "macros"] }
